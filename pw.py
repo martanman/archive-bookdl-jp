@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import subprocess
 import re
 from playwright.async_api import async_playwright
@@ -29,6 +30,8 @@ async def handle_token_and_json(request: Request):
 
 made_curl = False
 
+def remove_temps():
+    os.popen("rm image_curl.txt token.txt").read()
 
 def make_curl(url: str, headers: List[Tuple[str, str]], file_path: str):
     with open(file_path, "w") as f:
@@ -119,6 +122,8 @@ async def main():
             print("Closing browser")
             await context.close()
             await browser.close()
+
+            remove_temps()
 
 if __name__ == "__main__":
     assert len(sys.argv) == 3

@@ -12,6 +12,8 @@ zip $1.zip ./*.jpg
 mv $1.zip ..
 cd ..
 
-mkdir $1
-mv ./$pages/*.jpg $1
+# uncomment to keep a directory containing the non-reordered images
+# mkdir $1
+# mv ./$pages/*.jpg $1
+
 rm -rf $pages $ordered
