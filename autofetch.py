@@ -16,6 +16,7 @@ def run_curl(item):
     try:
         p = subprocess.Popen(f"""curl -s '{item["uri"]}{get_comm()} --output {pages}/{name}.jpg > /dev/null""", shell=True)
         p.wait(30)
+        print(f"downloaded image {name}")
     except subprocess.TimeoutExpired:
         if p:
             p.kill()
@@ -64,7 +65,6 @@ while keep:
         for i, item in enumerate(getd(dic)):
             name = str(item['leafNum'])
             if name not in done_names:
-                print(f"downloading image {name}")
                 keep = True
                 threads.append(threading.Thread(target=run_curl, args=[item]))
                 threads[-1].start()
@@ -72,7 +72,7 @@ while keep:
                     threads[0].join()
                     threads.pop(0)
 
-    print("waiting")
+    # wait for pending request to end
     for i, t in enumerate(threads):
         t.join()
     subprocess.Popen(awk_rm, shell=True).wait()

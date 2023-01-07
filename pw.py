@@ -3,7 +3,7 @@ import json
 import os
 import subprocess
 import re
-from playwright.async_api import async_playwright
+from playwright.async_api import Cookie, async_playwright
 from playwright.async_api import expect
 from playwright.async_api import Request, Frame
 from typing import List, Tuple
@@ -31,7 +31,7 @@ async def handle_token_and_json(request: Request):
 made_curl = False
 
 def remove_temps():
-    os.popen("rm image_curl.txt token.txt").read()
+    os.popen("rm image_curl.txt token.txt data.json").read()
 
 def make_curl(url: str, headers: List[Tuple[str, str]], file_path: str):
     with open(file_path, "w") as f:
@@ -49,12 +49,18 @@ async def handle_image_req(request: Request):
         global made_curl
         if made_curl:
             return
-        made_curl = True
         make_curl(request.url, hdrs, "image_curl.txt")
-
+        made_curl = True
 
 async def handle_frame(frame: Frame):
     print("changed to frame: ", frame.url)
+
+def get_auth_cookies():
+    try:
+        with open("auth_cookies.txt", "r") as f:
+            return json.load(f)
+    except Exception:
+        return None
 
 
 async def main():
@@ -64,19 +70,30 @@ async def main():
         page = await context.new_page()
         page.on("framenavigated", handle_frame)
 
+        # add auth cookies before navigating
+        auth_cookies = get_auth_cookies()
+        if auth_cookies:
+            print("Adding saved auth cookies")
+            await context.add_cookies(auth_cookies)
+        else:
+            print("Logging in")
+            await page.goto("https://archive.org/account/login")
+
+            # sign in
+            print("Filling auth details")
+            await page.get_by_label("Email address").fill(config.email)
+            await page.get_by_label("Password").fill(config.passwd)
+            async with page.expect_navigation():
+                await page.get_by_role("button", name="Log in").click()
+
+            # save auth cookies
+            print("Saving auth cookies")
+            with open("auth_cookies.txt", "w") as f:
+                json.dump(await context.cookies(), f) 
+
+        print("Going to the book's page")
         await page.goto(sys.argv[-1])
         print(f"page title: {await page.title()}")
-
-        # click login button
-        locator = page.locator(
-            "div > section.action-buttons.primary > button.ia-button.primary.initial")
-        await locator.click()
-
-        # sign in
-        print("Filling auth details")
-        await page.get_by_label("Email address").fill(config.email)
-        await page.get_by_label("Password").fill(config.passwd)
-        await page.get_by_role("button", name="Log in").click()
 
         # borrow
         print("borrowing")
@@ -96,7 +113,11 @@ async def main():
             for _ in range(6):
                 await page.keyboard.press("=", delay=1)
 
-            await asyncio.sleep(5)
+            print("waiting for curl request to be created")
+            while not made_curl:
+                await asyncio.sleep(1)
+                print(".")
+
             print("calling fetch.sh")
             fetchp = subprocess.Popen(f"sh fetch.sh {sys.argv[-2]}", shell=True)
 
