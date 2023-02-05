@@ -63,7 +63,7 @@ def get_auth_cookies():
         return None
 
 
-async def main(title_name: string, page_url: string, eng=False):
+async def main(title_name: str, page_url: str, eng=False):
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)
         context = await browser.new_context()
