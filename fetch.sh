@@ -5,7 +5,7 @@ ordered="./_temp_ordered"
 mkdir $pages
 mkdir $ordered
 
-python3 autofetch.py
+python3 autofetch.py $2
 
 cd $ordered
 zip $1.zip ./*.jpg

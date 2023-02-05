@@ -63,9 +63,9 @@ def get_auth_cookies():
         return None
 
 
-async def main():
+async def main(title_name: string, page_url: string, eng=False):
     async with async_playwright() as p:
-        browser = await p.chromium.launch()
+        browser = await p.chromium.launch(headless=False)
         context = await browser.new_context()
         page = await context.new_page()
         page.on("framenavigated", handle_frame)
@@ -92,7 +92,7 @@ async def main():
                 json.dump(await context.cookies(), f) 
 
         print("Going to the book's page")
-        await page.goto(sys.argv[-1])
+        await page.goto(page_url)
         print(f"page title: {await page.title()}")
 
         # borrow
@@ -110,6 +110,8 @@ async def main():
 
         try:
             page.on("request", handle_image_req)
+            # focus BookReader to zoom
+            await page.focus("#BookReader > div.BRcontainer")
             for _ in range(6):
                 await page.keyboard.press("=", delay=1)
 
@@ -119,7 +121,7 @@ async def main():
                 print(".")
 
             print("calling fetch.sh")
-            fetchp = subprocess.Popen(f"sh fetch.sh {sys.argv[-2]}", shell=True)
+            fetchp = subprocess.Popen(f"sh fetch.sh {title_name} {int(eng)}", shell=True)
 
             i = 0
             while True:
@@ -147,5 +149,9 @@ async def main():
             remove_temps()
 
 if __name__ == "__main__":
+    kwargs = {}
+    if "--eng" in sys.argv:
+        sys.argv.remove("--eng")
+        kwargs["eng"] = True
     assert len(sys.argv) == 3
-    asyncio.run(main())
+    asyncio.run(main(sys.argv[-2], sys.argv[-1], **kwargs))

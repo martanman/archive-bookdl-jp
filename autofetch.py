@@ -1,3 +1,4 @@
+import sys
 import threading
 import subprocess
 import re 
@@ -82,8 +83,11 @@ a = os.listdir(pages)
 nums = list(map(lambda x: int(x[:-4]), a))
 nums = sorted(nums)
 ognums = nums.copy()
-for i in range(1, len(nums) - 1, 2):
-    nums[i], nums[i + 1] = nums[i + 1], nums[i]
+
+english = sys.argv[2] == "1"
+if not english:
+    for i in range(1, len(nums) - 1, 2):
+        nums[i], nums[i + 1] = nums[i + 1], nums[i]
     
 for a, b in zip(ognums, nums):
     os.popen(f"cp {pages}/{a}.jpg {ordered}/{b}.jpg").read()
