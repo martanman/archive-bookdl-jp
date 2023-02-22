@@ -15,7 +15,13 @@ Edit `config.py` with your email and password for your archive.org account. Then
 python3 pw.py output_name "book_url"
 ```
 
-The zip file `output_name.zip` is created, containing a correctly numbered (hopefully) list of the book's .jpg files. `book_url` is in the format `https://archive.org/details/XXXX`
+where `book_url` is the book's page in a format like "https://archive.org/details/XXXXX". The default behavior assumes the book is Japanese (i.e. right-left), but for English (left-right) books you can pass in the `--eng` flag:
+
+```
+python3 pw.py output_name "book_url" --eng
+```
+
+The zip file `output_name.zip` is created, containing a correctly numbered list of the book's .jpg files.
 
 ### Disclaimer
 
